@@ -1,0 +1,4949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Wifi Checker — Web Demo</title>
+
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+
+  body{
+    background:#000;
+    min-height:100vh;
+    padding:0;
+    margin:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+
+  .phone{
+    position:relative;
+    width:min(100vw, calc(100vh * 380 / 740));
+    height:min(100vh, calc(100vw * 740 / 380));
+    border-radius:0;
+    background:#000;
+    padding:0;
+    box-shadow:none;
+  }
+
+  .screen{
+    position:relative;
+    width:100%;
+    height:100%;
+    border-radius:0;
+    overflow:hidden;
+    background:#000;
+  }
+
+  .mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace
+  }
+
+  .app-input{
+    outline:none;
+    border:none;
+    width:100%
+  }
+
+  .txt-btn{
+    cursor:pointer;
+    user-select:none
+  }
+
+  .txt-btn:active{
+    opacity:.6
+  }
+
+  .fade{
+    transition:opacity .7s ease
+  }
+
+  input::placeholder{
+    color:#64748b
+  }
+
+  .term-scroll::-webkit-scrollbar{
+    width:4px;
+    height:0
+  }
+
+  .term-scroll::-webkit-scrollbar-thumb{
+    background:rgba(128,128,128,.4);
+    border-radius:2px
+  }
+
+
+  /* =========================================================
+     GALAXY S25 STYLE VOLUME BUTTON
+     ========================================================= */
+
+  .volume-cluster{
+    position:absolute;
+    right:-3px;
+    top:108px;
+    width:5px;
+    height:92px;
+    background:#252525;
+    border-radius:0 4px 4px 0;
+    z-index:5;
+    overflow:hidden;
+    box-shadow:
+      0 1px 2px rgba(0,0,0,.35),
+      inset 1px 0 rgba(255,255,255,.04);
+  }
+
+  .volume-zone{
+    position:absolute;
+    left:0;
+    width:100%;
+    cursor:pointer;
+    background:#252525;
+    transition:
+      background .1s ease,
+      transform .1s ease;
+  }
+
+  .volume-zone:active{
+    background:#555;
+    transform:translateX(-1px);
+  }
+
+  .volume-up{
+    top:0;
+    height:50%;
+    border-bottom:1px solid #111;
+  }
+
+  .volume-down{
+    bottom:0;
+    height:50%;
+  }
+
+
+  /* =========================================================
+     GALAXY S25 STYLE POWER BUTTON
+     ========================================================= */
+
+  .power-btn{
+    position:absolute;
+    right:-3px;
+    top:214px;
+    width:5px;
+    height:50px;
+    background:#252525;
+    border-radius:0 4px 4px 0;
+    z-index:5;
+    cursor:pointer;
+    transition:
+      background .1s ease,
+      transform .1s ease;
+  }
+
+  .power-btn:active{
+    background:#555;
+    transform:translateX(-1px);
+  }
+
+
+  /* =========================================================
+     ONE UI VOLUME PANEL
+     ========================================================= */
+
+  #volumeIndicator{
+    position:absolute;
+    top:50%;
+    right:12px;
+    transform:translateY(-50%) translateX(30px);
+    width:64px;
+    min-height:176px;
+    padding:12px 9px;
+    border-radius:22px;
+    background:rgba(30,30,30,.96);
+    color:#fff;
+    z-index:950;
+    opacity:0;
+    pointer-events:none;
+    transition:
+      opacity .2s ease,
+      transform .2s ease;
+    box-shadow:
+      0 10px 35px rgba(0,0,0,.42),
+      inset 0 1px rgba(255,255,255,.04);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  #volumeIndicator.show{
+    opacity:1;
+    transform:translateY(-50%) translateX(0);
+  }
+
+  .volume-indicator-title{
+    font-size:10px;
+    font-weight:600;
+    color:#e5e7eb;
+    margin-bottom:9px;
+    white-space:nowrap;
+  }
+
+  .volume-icon{
+    width:24px;
+    height:24px;
+    margin-bottom:9px;
+    opacity:.95;
+  }
+
+  .volume-bar{
+    position:relative;
+    width:8px;
+    height:92px;
+    border-radius:8px;
+    background:#4a4a4a;
+    overflow:hidden;
+    display:flex;
+    align-items:flex-end;
+  }
+
+  #volumeFill{
+    width:100%;
+    height:50%;
+    background:#e8eaed;
+    border-radius:8px;
+    transition:height .15s ease;
+  }
+
+  .volume-percent{
+    margin-top:8px;
+    font-size:10px;
+    font-weight:600;
+    color:#cbd5e1;
+  }
+
+
+  /* =========================================================
+     LOCK SCREEN — ONE UI STYLE
+     ========================================================= */
+
+  #lockScreen{
+    position:absolute;
+    inset:0;
+    z-index:700;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:
+      radial-gradient(
+        circle at 50% 38%,
+        #20242b 0%,
+        #08090b 52%,
+        #000 100%
+      );
+    color:#fff;
+    opacity:0;
+    transition:opacity .25s ease;
+  }
+
+  #lockScreen.show{
+    opacity:1;
+  }
+
+  .lock-icon-wrap{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:rgba(255,255,255,.08);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:18px;
+  }
+
+  .lock-icon-wrap svg{
+    width:22px;
+    height:22px;
+  }
+
+  .lock-time{
+    font-size:48px;
+    font-weight:300;
+    letter-spacing:-2px;
+  }
+
+  .lock-date{
+    margin-top:5px;
+    font-size:13px;
+    color:#b9bec7;
+  }
+
+  .lock-hint{
+    position:absolute;
+    bottom:50px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:11px;
+    color:#9ca3af;
+  }
+
+  .lock-hint svg{
+    width:15px;
+    height:15px;
+  }
+
+
+  /* =========================================================
+     ONE UI POWER MENU
+     ========================================================= */
+
+  #powerMenu{
+    position:absolute;
+    inset:0;
+    z-index:800;
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    background:rgba(0,0,0,.45);
+    opacity:0;
+    transition:opacity .22s ease;
+    padding:12px;
+  }
+
+  #powerMenu.show{
+    opacity:1;
+  }
+
+  .power-menu-card{
+    width:100%;
+    max-width:330px;
+    padding:10px 10px 15px;
+    border-radius:28px;
+    background:#202124;
+    box-shadow:
+      0 18px 60px rgba(0,0,0,.58),
+      inset 0 1px rgba(255,255,255,.04);
+    transform:translateY(28px);
+    transition:transform .22s ease;
+  }
+
+  #powerMenu.show .power-menu-card{
+    transform:translateY(0);
+  }
+
+  .power-menu-handle{
+    width:34px;
+    height:4px;
+    border-radius:4px;
+    background:#6b6f76;
+    margin:2px auto 14px;
+  }
+
+  .power-menu-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:5px 8px 14px;
+  }
+
+  .power-header-icon{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#303136;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+
+  .power-header-icon svg{
+    width:21px;
+    height:21px;
+  }
+
+  .power-menu-title-wrap{
+    min-width:0;
+  }
+
+  .power-menu-title{
+    color:#f5f5f5;
+    font-size:17px;
+    font-weight:700;
+    line-height:1.2;
+  }
+
+  .power-menu-subtitle{
+    color:#9aa0a6;
+    font-size:11px;
+    margin-top:3px;
+  }
+
+  .power-menu-actions{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .power-menu-btn{
+    width:100%;
+    min-height:62px;
+    border:1px solid transparent;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:9px 12px;
+    color:#fff;
+    text-align:left;
+    cursor:pointer;
+    transition:
+      transform .12s ease,
+      filter .12s ease,
+      background .12s ease;
+  }
+
+  .power-menu-btn:active{
+    transform:scale(.985);
+    filter:brightness(.88);
+  }
+
+  .power-menu-icon{
+    width:42px;
+    height:42px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+
+  .power-menu-icon svg{
+    width:21px;
+    height:21px;
+  }
+
+  .power-menu-btn-text{
+    flex:1;
+    min-width:0;
+  }
+
+  .power-menu-btn-title{
+    display:block;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .power-menu-btn-desc{
+    display:block;
+    font-size:10px;
+    color:#b8bec7;
+    margin-top:3px;
+  }
+
+  .power-menu-btn.sos{
+    background:#302124;
+    border-color:#4b292e;
+  }
+
+  .power-menu-btn.sos .power-menu-icon{
+    background:#b3261e;
+  }
+
+  .power-menu-btn.restart{
+    background:#202a35;
+    border-color:#304253;
+  }
+
+  .power-menu-btn.restart .power-menu-icon{
+    background:#2f6fed;
+  }
+
+  .power-menu-btn.shutdown{
+    background:#302a22;
+    border-color:#4a3a29;
+  }
+
+  .power-menu-btn.shutdown .power-menu-icon{
+    background:#d97706;
+  }
+
+  .power-menu-footer{
+    text-align:center;
+    color:#7f858d;
+    font-size:10px;
+    margin-top:13px;
+  }
+
+
+  /* =========================================================
+     SOS SCREEN
+     ========================================================= */
+
+  #sosScreen{
+    position:absolute;
+    inset:0;
+    z-index:850;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:#090a0c;
+    color:#fff;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+
+  #sosScreen.show{
+    opacity:1;
+  }
+
+  .sos-icon{
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    background:#b3261e;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:18px;
+  }
+
+  .sos-icon svg{
+    width:32px;
+    height:32px;
+  }
+
+  .sos-title{
+    font-size:32px;
+    font-weight:700;
+  }
+
+  .sos-subtitle{
+    margin-top:8px;
+    color:#9ca3af;
+    font-size:13px;
+    text-align:center;
+    padding:0 30px;
+  }
+
+  .sos-cancel{
+    margin-top:28px;
+    width:150px;
+    height:46px;
+    border:0;
+    border-radius:14px;
+    background:#303136;
+    color:#fff;
+    cursor:pointer;
+  }
+
+
+  /* =========================================================
+     POWERED OFF
+     Kept in DOM but never shown.
+     ========================================================= */
+
+  #poweredOff{
+    position:absolute;
+    inset:0;
+    z-index:900;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:#000;
+    color:#fff;
+  }
+
+  .powered-off-icon{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#202124;
+    margin-bottom:17px;
+  }
+
+  .powered-off-icon svg{
+    width:24px;
+    height:24px;
+  }
+
+  .powered-off-title{
+    font-size:23px;
+    font-weight:500;
+  }
+
+  #powerOnBtn{
+    display:none;
+    margin-top:24px;
+    width:145px;
+    height:48px;
+    border:none;
+    border-radius:14px;
+    background:#2f6fed;
+    color:#fff;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+
+  .nav-key{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    user-select:none
+  }
+
+  .nav-key svg{
+    transition:transform .12s ease,opacity .12s ease
+  }
+
+  .nav-key:active svg{
+    transform:scale(.8);
+    opacity:.6
+  }
+
+
+  /* =========================================================
+     BOOT SCREEN
+     ========================================================= */
+
+  #bootOverlay{
+    position:absolute;
+    inset:0;
+    z-index:1000;
+
+    background:#000;
+    color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    overflow:hidden;
+    pointer-events:auto;
+    user-select:none;
+    touch-action:none;
+  }
+
+  .boot-phase{
+    position:absolute;
+    inset:0;
+
+    display:flex;
+    flex-direction:column;
+
+    opacity:0;
+    pointer-events:none;
+  }
+
+  #bootMoon{
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+
+  #bootAndroid{
+    align-items:center;
+    justify-content:flex-start;
+    text-align:center;
+  }
+
+  .boot-brand{
+    position:absolute;
+
+    top:46%;
+
+    left:50%;
+    transform:translate(-50%,-50%);
+
+    width:100%;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .boot-moon-studio{
+    font-size:29px;
+    line-height:1;
+    font-weight:700;
+    letter-spacing:-.5px;
+    white-space:nowrap;
+  }
+
+  .boot-moon-studio .moon{
+    color:#fff;
+  }
+
+  .boot-moon-studio .studio{
+    color:#2563eb;
+  }
+
+  .boot-knox{
+    margin-top:9px;
+
+    font-size:12px;
+    line-height:1;
+
+    font-weight:600;
+    color:#fff;
+
+    transform:translateX(31px);
+
+    white-space:nowrap;
+  }
+
+  .boot-powered{
+    position:absolute;
+
+    bottom:8.5%;
+
+    left:50%;
+    transform:translateX(-50%);
+
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+
+    white-space:nowrap;
+  }
+
+  .boot-powered-text{
+    font-size:12px;
+    line-height:1;
+
+    font-weight:600;
+    color:#fff;
+
+    margin-left:1px;
+    margin-bottom:5px;
+  }
+
+  .boot-android-brand{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+  }
+
+  .boot-android-word{
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      Arial,
+      sans-serif;
+
+    font-size:29px;
+    line-height:.9;
+
+    font-weight:600;
+    letter-spacing:-1.3px;
+
+    color:#fff;
+  }
+
+  .boot-android-logo{
+    display:block;
+
+    width:42px;
+    height:auto;
+
+    object-fit:contain;
+
+    flex-shrink:0;
+  }
+
+  #bootLoading{
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+
+  .loading-title{
+    color:#fff;
+    font-size:22px;
+    font-weight:400;
+    letter-spacing:.1px;
+  }
+
+  .loading-subtitle{
+    color:#8a8a8a;
+    font-size:13px;
+    margin-top:10px;
+  }
+
+  #bootMoon,
+  #bootAndroid,
+  #bootLoading{
+    transition:opacity .7s ease;
+  }
+
+
+  /* VIDEO MODE: ẩn các phần tử khung điện thoại cứng */
+  #volumeCluster, #powerBtn { display:none !important; }
+
+
+  /* ===== VIDEO GUIDE MODE ===== */
+  #videoCursor{
+    position:fixed;
+    width:26px;height:26px;
+    border:2.5px solid #fff;
+    border-radius:50%;
+    background:rgba(255,255,255,.18);
+    box-shadow:0 0 0 1px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.45);
+    pointer-events:none;
+    z-index:99999;
+    transform:translate(-50%,-50%);
+    transition:left .55s cubic-bezier(.4,0,.2,1), top .55s cubic-bezier(.4,0,.2,1), width .12s, height .12s, background .12s;
+    left:-100px;top:-100px;
+    opacity:0;
+  }
+  #videoCursor.show{opacity:1}
+  #videoCursor.clicking{
+    width:16px;height:16px;
+    background:rgba(255,255,255,.5);
+  }
+  #videoCursor::after{
+    content:'';
+    position:absolute;
+    width:5px;height:5px;
+    background:#fff;border-radius:50%;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+  }
+  .click-ripple{
+    position:fixed;
+    width:26px;height:26px;
+    border:2.5px solid #60a5fa;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:99998;
+    transform:translate(-50%,-50%) scale(1);
+    animation:rippleAnim .65s ease-out forwards;
+  }
+  @keyframes rippleAnim{
+    0%{transform:translate(-50%,-50%) scale(1);opacity:.9}
+    100%{transform:translate(-50%,-50%) scale(3.2);opacity:0}
+  }
+  #guideText{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translateX(-50%);
+    background:rgba(10,12,20,.82);
+    color:#fff;
+    padding:12px 26px;
+    border-radius:12px;
+    font-size:15.5px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    z-index:99997;
+    opacity:0;
+    transition:opacity .45s ease;
+    max-width:86vw;
+    text-align:center;
+    backdrop-filter:blur(8px);
+    pointer-events:none;
+    line-height:1.45;
+    box-shadow:0 8px 30px rgba(0,0,0,.4);
+  }
+  #guideText.show{opacity:1}
+  #guideText .step-badge{
+    display:inline-block;
+    background:#2563eb;
+    color:#fff;
+    border-radius:7px;
+    padding:2px 10px;
+    font-size:12.5px;
+    margin-right:10px;
+    font-weight:700;
+    vertical-align:middle;
+  }
+  #startOverlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.92);
+    z-index:100000;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    cursor:pointer;
+    transition:opacity .5s ease;
+  }
+  #startOverlay.hide{opacity:0;pointer-events:none}
+  #startOverlay .play-btn{
+    width:84px;height:84px;
+    border-radius:50%;
+    background:#2563eb;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:24px;
+    box-shadow:0 0 0 8px rgba(37,99,235,.25);
+    animation:pulsePlay 1.8s ease-in-out infinite;
+  }
+  @keyframes pulsePlay{
+    0%,100%{box-shadow:0 0 0 8px rgba(37,99,235,.25)}
+    50%{box-shadow:0 0 0 16px rgba(37,99,235,.08)}
+  }
+  #startOverlay .play-btn svg{width:36px;height:36px;fill:#fff;margin-left:4px}
+  #startOverlay h1{font-size:26px;margin:0 0 10px;font-weight:700}
+  #startOverlay p{font-size:14px;color:#9ca3af;margin:0;max-width:340px;text-align:center;line-height:1.6}
+  .phone{transition:transform .9s cubic-bezier(.4,0,.2,1);}
+
+</style>
+</head>
+
+<body>
+
+  <div class="phone">
+
+    <!-- LONG VOLUME CLUSTER -->
+
+    <div
+      id="volumeCluster"
+      class="volume-cluster"
+      title="Volume"
+    >
+
+      <div
+        id="volumeUpBtn"
+        class="volume-zone volume-up"
+        title="Volume up"
+      ></div>
+
+      <div
+        id="volumeDownBtn"
+        class="volume-zone volume-down"
+        title="Volume down"
+      ></div>
+
+    </div>
+
+
+    <!-- POWER BUTTON -->
+
+    <div
+      id="powerBtn"
+      class="power-btn"
+      title="Power"
+    ></div>
+
+
+    <div class="screen" id="screen">
+
+      <!-- STATUS BAR -->
+
+      <div
+        style="
+          position:absolute;
+          top:0;
+          left:0;
+          right:0;
+          height:26px;
+          background:#0a0a0a;
+          z-index:20;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          padding:0 16px;
+          color:#fff;
+          font-size:11px;
+        "
+      >
+
+        <span
+          id="clock"
+          class="mono"
+          style="font-weight:600;"
+        >9:41</span>
+
+        <div
+          style="
+            display:flex;
+            align-items:center;
+            gap:6px;
+          "
+        >
+
+          <span
+            style="
+              font-size:9px;
+              letter-spacing:.5px;
+            "
+          >5G</span>
+
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            stroke-width="2.4"
+            stroke-linecap="round"
+          >
+            <path d="M5 12.5a10 10 0 0 1 14 0"/>
+            <path d="M8.5 16a5 5 0 0 1 7 0"/>
+            <circle
+              cx="12"
+              cy="19"
+              r="1.2"
+              fill="#fff"
+              stroke="none"
+            />
+          </svg>
+
+          <span
+            style="
+              display:inline-flex;
+              align-items:center;
+              gap:3px;
+            "
+          >
+
+            <span
+              style="
+                position:relative;
+                display:inline-block;
+                width:21px;
+                height:10px;
+                border:1px solid #fff;
+                border-radius:2px;
+              "
+            >
+
+              <span
+                style="
+                  position:absolute;
+                  top:1px;
+                  left:1px;
+                  bottom:1px;
+                  width:calc(100% - 2px);
+                  background:#fff;
+                  border-radius:1px;
+                "
+              ></span>
+
+            </span>
+
+            <span
+              style="
+                font-size:9px;
+                font-weight:600;
+              "
+            >100%</span>
+
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- PUNCH-HOLE -->
+
+      <div
+        style="
+          position:absolute;
+          top:7px;
+          left:50%;
+          transform:translateX(-50%);
+          width:11px;
+          height:11px;
+          border-radius:50%;
+          background:#000;
+          border:1.5px solid #2c2c2c;
+          z-index:21;
+        "
+      ></div>
+
+
+      <!-- BOOT OVERLAY -->
+
+      <div id="bootOverlay" aria-hidden="true">
+
+        <div id="bootMoon" class="boot-phase">
+
+          <div class="boot-moon-studio">
+            <span class="moon">Moon</span>
+            <span class="studio"> Studio</span>
+          </div>
+
+        </div>
+
+
+        <div id="bootAndroid" class="boot-phase">
+
+          <div class="boot-brand">
+
+            <div class="boot-moon-studio">
+              <span class="moon">Moon</span>
+              <span class="studio"> Studio</span>
+            </div>
+
+            <div class="boot-knox">
+              Secured by Knox
+            </div>
+
+          </div>
+
+
+          <div class="boot-powered">
+
+            <div class="boot-powered-text">
+              Powered by
+            </div>
+
+            <div class="boot-android-brand">
+
+              <span class="boot-android-word">
+                android
+              </span>
+
+              <img
+                class="boot-android-logo"
+                src="https://developer.android.com/static/images/brand/android-head_flat.png"
+                alt="Android"
+                draggable="false"
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div id="bootLoading" class="boot-phase">
+
+          <div class="loading-title">
+            Đang cài đặt ứng dụng…
+          </div>
+
+          <div class="loading-subtitle">
+            Starting Wifi Checker
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ACTIVATION SCREEN -->
+
+      <div
+        id="actScreen"
+        style="
+          position:absolute;
+          left:0;
+          right:0;
+          top:26px;
+          bottom:36px;
+          background:#0f172a;
+          overflow-y:auto;
+          padding:20px;
+          display:none;
+          flex-direction:column;
+          align-items:center;
+        "
+      >
+
+        <div
+          style="
+            width:100%;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            padding:16px 4px;
+          "
+        >
+
+          <div
+            style="
+              font-size:30px;
+              font-weight:700;
+              color:#fff;
+              text-align:center;
+            "
+          >
+            Wifi checker
+          </div>
+
+          <div
+            style="
+              font-size:14px;
+              color:#94a3b8;
+              text-align:center;
+              padding:8px 0 24px;
+            "
+          >
+            Activation system for WiFi Checker.
+          </div>
+
+
+          <div
+            style="
+              width:100%;
+              padding:1px;
+              border-radius:12px;
+              background:#334155;
+            "
+          >
+
+            <div
+              style="
+                border-radius:11px;
+                background:#0f172a;
+                padding:20px;
+              "
+            >
+
+              <div
+                style="
+                  font-size:20px;
+                  font-weight:700;
+                  color:#fff;
+                "
+              >
+                Activation Code
+              </div>
+
+              <div
+                style="
+                  font-size:13px;
+                  color:#94a3b8;
+                  padding:18px 0 7px;
+                "
+              >
+                Activation Code
+              </div>
+
+              <input
+                id="actInput"
+                class="app-input"
+                placeholder="Enter your activation code"
+                style="
+                  height:52px;
+                  border-radius:12px;
+                  background:#1e293b;
+                  border:1px solid #475569;
+                  color:#fff;
+                  font-size:15px;
+                  padding:12px 14px;
+                "
+                autocomplete="off"
+                spellcheck="false"
+              />
+
+              <div
+                id="actError"
+                style="
+                  font-size:12px;
+                  color:#f87171;
+                  min-height:28px;
+                  padding-top:7px;
+                "
+              ></div>
+
+              <div
+                id="getCodeBtn"
+                class="txt-btn"
+                style="
+                  font-size:13px;
+                  color:#94a3b8;
+                  padding:4px 0 18px;
+                "
+              >
+                If you do not have an activation code? Get code
+              </div>
+
+              <button
+                id="verifyBtn"
+                style="
+                  width:100%;
+                  height:50px;
+                  border-radius:12px;
+                  background:#2563eb;
+                  color:#fff;
+                  font-size:14px;
+                  border:none;
+                  cursor:pointer;
+                "
+              >
+                Verify
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="linkCard"
+            style="
+              display:none;
+              width:100%;
+              margin-top:14px;
+              border-radius:12px;
+              background:#1e293b;
+              border:1px solid #334155;
+              padding:18px;
+            "
+          >
+
+            <div
+              style="
+                font-size:18px;
+                font-weight:700;
+                color:#fff;
+              "
+            >
+              Your link
+            </div>
+
+            <div
+              style="
+                font-size:12px;
+                color:#94a3b8;
+                padding:5px 0 8px;
+              "
+            >
+              Your activation link
+            </div>
+
+            <div
+              id="linkText"
+              class="mono"
+              style="
+                font-size:12px;
+                color:#60a5fa;
+                padding:11px 12px;
+                border-radius:12px;
+                background:#0f172a;
+                border:1px solid #475569;
+                word-break:break-all;
+              "
+            ></div>
+
+            <div
+              style="
+                display:flex;
+                gap:6px;
+                padding-top:12px;
+                height:48px;
+              "
+            >
+
+              <button
+                id="copyBtn"
+                style="
+                  flex:1;
+                  border-radius:12px;
+                  background:#334155;
+                  color:#fff;
+                  font-size:13px;
+                  border:none;
+                  cursor:pointer;
+                "
+              >
+                Copy
+              </button>
+
+              <button
+                id="openBtn"
+                style="
+                  flex:1;
+                  border-radius:12px;
+                  background:#334155;
+                  color:#fff;
+                  font-size:13px;
+                  border:none;
+                  cursor:pointer;
+                "
+              >
+                Open
+              </button>
+
+              <button
+                id="closeLinkBtn"
+                style="
+                  flex:1;
+                  border-radius:12px;
+                  background:#475569;
+                  color:#fff;
+                  font-size:13px;
+                  border:none;
+                  cursor:pointer;
+                "
+              >
+                Close
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div
+            style="
+              font-size:12px;
+              color:#64748b;
+              text-align:center;
+              padding:22px 0 5px;
+              line-height:1.5;
+            "
+          >
+            © 2026 MoonActivation.<br/>
+            Activation System
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- WELCOME -->
+
+      <div
+        id="welcome"
+        class="fade"
+        style="
+          position:absolute;
+          inset:0;
+          background:#000;
+          z-index:30;
+          display:none;
+          align-items:center;
+          justify-content:center;
+          opacity:0;
+        "
+      >
+
+        <div
+          class="mono"
+          style="
+            font-size:34px;
+            font-weight:700;
+            color:#fff;
+            text-align:center;
+            padding:0 20px;
+          "
+        >
+          Welcome to Wifi Checker
+        </div>
+
+      </div>
+
+
+      <!-- MAIN APP -->
+
+      <div
+        id="appScreen"
+        style="
+          display:none;
+          position:absolute;
+          left:0;
+          right:0;
+          top:26px;
+          bottom:36px;
+          background:#f5f4ef;
+          padding:18px;
+          flex-direction:column;
+        "
+      >
+
+        <div
+          style="
+            height:48px;
+            display:flex;
+            align-items:center;
+            flex-shrink:0;
+          "
+        >
+
+          <span
+            id="titleText"
+            style="
+              font-size:25px;
+              font-weight:700;
+              color:#1e1e1e;
+            "
+          >
+            Wifi checker
+          </span>
+
+          <span
+            id="betaText"
+            style="
+              font-size:12px;
+              color:#6e6e69;
+            "
+          >
+            beta
+          </span>
+
+        </div>
+
+
+        <div
+          style="
+            height:300px;
+            display:flex;
+            flex-shrink:0;
+          "
+        >
+
+          <div
+            style="
+              flex:1;
+              height:100%;
+              display:flex;
+              flex-direction:column;
+              padding:5px 6px;
+              min-height:0;
+            "
+          >
+
+            <div
+              id="terminalTitle"
+              style="
+                height:27px;
+                font-size:14px;
+                color:#1e1e1e;
+                flex-shrink:0;
+              "
+            >
+              Terminal
+            </div>
+
+            <div
+              id="terminalScroll"
+              class="term-scroll"
+              style="
+                flex:1;
+                min-height:0;
+                overflow-y:auto;
+                overflow-x:hidden;
+                background:#f7f7f4;
+                border-radius:4px;
+              "
+            >
+
+              <div
+                id="terminal"
+                class="mono"
+                style="
+                  font-size:10px;
+                  color:#1e1e1e;
+                  padding:6px;
+                  white-space:pre-wrap;
+                  word-break:break-all;
+                  line-height:1.4;
+                "
+              ></div>
+
+            </div>
+
+
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                margin-top:4px;
+                flex-shrink:0;
+              "
+            >
+
+              <input
+                id="cmdInput"
+                class="app-input"
+                placeholder="Send command..."
+                style="
+                  flex:1;
+                  height:36px;
+                  font-size:10px;
+                  padding:0 7px 0 5px;
+                  border:1px solid rgba(128,128,128,.35);
+                  border-radius:4px;
+                  background:transparent;
+                  color:#1e1e1e;
+                "
+                autocomplete="off"
+                spellcheck="false"
+              />
+
+              <div
+                id="sendBtn"
+                class="txt-btn"
+                style="
+                  width:38px;
+                  height:36px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  font-size:18px;
+                  color:#1e1e1e;
+                "
+              >
+                ▷
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div
+            style="
+              padding-left:12px;
+              display:flex;
+              flex-direction:column;
+              flex-shrink:0;
+            "
+          >
+
+            <div
+              id="terminalBtn"
+              class="txt-btn"
+              style="
+                width:105px;
+                height:52px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:17px;
+                font-weight:700;
+                color:#1e1e1e;
+              "
+            >
+              Terminal
+            </div>
+
+            <div
+              id="settingBtn"
+              class="txt-btn"
+              style="
+                width:105px;
+                height:52px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:17px;
+                font-weight:700;
+                color:#1e1e1e;
+              "
+            >
+              Setting
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div
+          style="
+            height:30px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            flex-shrink:0;
+          "
+        >
+
+          <span
+            id="statsTitle"
+            style="
+              font-size:15px;
+              font-weight:700;
+              color:#1e1e1e;
+            "
+          >
+            LAN status
+          </span>
+
+          <span
+            id="demoNote"
+            style="
+              font-size:9px;
+              color:#6e6e69;
+              opacity:.7;
+            "
+          >
+            * Demo scan — results are simulated.
+          </span>
+
+        </div>
+
+
+        <div
+          id="statsText"
+          style="
+            height:84px;
+            font-size:10.5px;
+            color:#6e6e69;
+            line-height:1.55;
+            white-space:pre-wrap;
+            overflow:hidden;
+            flex-shrink:0;
+          "
+        >
+          Waiting for scan...
+        </div>
+
+
+        <div
+          class="term-scroll"
+          style="
+            flex:1;
+            min-height:0;
+            overflow-y:auto;
+            overflow-x:hidden;
+          "
+        >
+
+          <div
+            id="deviceText"
+            class="mono"
+            style="
+              font-size:9.5px;
+              color:#1e1e1e;
+              white-space:pre;
+              line-height:1.45;
+            "
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- SETTINGS -->
+
+      <div
+        id="settingsDlg"
+        style="
+          display:none;
+          position:absolute;
+          inset:0;
+          z-index:40;
+          background:rgba(0,0,0,.45);
+          padding:22px;
+        "
+      >
+
+        <div
+          style="
+            height:55px;
+            display:flex;
+            align-items:center;
+          "
+        >
+          <span
+            style="
+              font-size:25px;
+              font-weight:700;
+              color:#fff;
+            "
+          >
+            Settings
+          </span>
+        </div>
+
+        <div
+          style="
+            height:40px;
+            display:flex;
+            align-items:center;
+          "
+        >
+          <span
+            style="
+              font-size:16px;
+              font-weight:700;
+              color:#fff;
+            "
+          >
+            Appearance
+          </span>
+        </div>
+
+        <button
+          id="themeBtn"
+          style="
+            width:100%;
+            height:50px;
+            border-radius:12px;
+            background:#334155;
+            color:#fff;
+            font-size:14px;
+            border:none;
+            cursor:pointer;
+          "
+        >
+          Light mode
+        </button>
+
+        <div
+          style="
+            font-size:13px;
+            color:#e5e7eb;
+            padding-top:8px;
+            line-height:1.5;
+            height:120px;
+          "
+        >
+          <br/>
+          Wifi Checker<br/>
+          Developed by Moon Studio<br/><br/>
+          Terminal logs are preserved when<br/>
+          changing the application theme.
+        </div>
+
+        <button
+          id="closeSettingsBtn"
+          style="
+            width:100%;
+            height:50px;
+            border-radius:12px;
+            background:#475569;
+            color:#fff;
+            font-size:14px;
+            border:none;
+            cursor:pointer;
+            margin-top:8px;
+          "
+        >
+          Close
+        </button>
+
+      </div>
+
+
+      <!-- ONE UI VOLUME INDICATOR -->
+
+      <div id="volumeIndicator">
+
+        <div class="volume-indicator-title">
+          Volume
+        </div>
+
+        <svg
+          class="volume-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#fff"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 9v6h4l5 4V5L8 9H4z"/>
+          <path d="M16 9.5a4 4 0 0 1 0 5"/>
+          <path d="M18.5 7a7.5 7.5 0 0 1 0 10"/>
+        </svg>
+
+        <div class="volume-bar">
+          <div id="volumeFill"></div>
+        </div>
+
+        <div
+          id="volumePercent"
+          class="volume-percent"
+        >
+          50%
+        </div>
+
+      </div>
+
+
+      <!-- LOCK SCREEN -->
+
+      <div id="lockScreen">
+
+        <div class="lock-icon-wrap">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect
+              x="5"
+              y="10"
+              width="14"
+              height="10"
+              rx="2"
+            />
+            <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+          </svg>
+
+        </div>
+
+        <div
+          id="lockTime"
+          class="lock-time"
+        >
+          9:41
+        </div>
+
+        <div
+          id="lockDate"
+          class="lock-date"
+        >
+          Monday, January 1
+        </div>
+
+        <div class="lock-hint">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9ca3af"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <path d="M12 3v8"/>
+            <path d="M7 5.8a8 8 0 1 0 10 0"/>
+          </svg>
+
+          <span>
+            Press Power to unlock
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ONE UI POWER MENU -->
+
+      <div id="powerMenu">
+
+        <div class="power-menu-card">
+
+          <div class="power-menu-handle"></div>
+
+          <div class="power-menu-header">
+
+            <div class="power-header-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#fff"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <path d="M12 3v8"/>
+                <path d="M7 5.8a8 8 0 1 0 10 0"/>
+              </svg>
+
+            </div>
+
+            <div class="power-menu-title-wrap">
+
+              <div class="power-menu-title">
+                Power
+              </div>
+
+              <div class="power-menu-subtitle">
+                Device controls
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="power-menu-actions">
+
+            <!-- SOS -->
+
+            <button
+              id="sosBtn"
+              class="power-menu-btn sos"
+            >
+
+              <span class="power-menu-icon">
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 4l9 16H3L12 4z"/>
+                  <path d="M12 9v5"/>
+                  <circle
+                    cx="12"
+                    cy="17"
+                    r="1"
+                    fill="#fff"
+                    stroke="none"
+                  />
+                </svg>
+
+              </span>
+
+              <span class="power-menu-btn-text">
+
+                <span class="power-menu-btn-title">
+                  SOS
+                </span>
+
+                <span class="power-menu-btn-desc">
+                  Emergency screen
+                </span>
+
+              </span>
+
+            </button>
+
+
+            <!-- RESTART -->
+
+            <button
+              id="resetBtn"
+              class="power-menu-btn restart"
+            >
+
+              <span class="power-menu-icon">
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 11a8 8 0 1 0 2 5"/>
+                  <path d="M20 4v7h-7"/>
+                </svg>
+
+              </span>
+
+              <span class="power-menu-btn-text">
+
+                <span class="power-menu-btn-title">
+                  Restart
+                </span>
+
+                <span class="power-menu-btn-desc">
+                  Restart the device
+                </span>
+
+              </span>
+
+            </button>
+
+
+            <!-- SHUT DOWN -->
+
+            <button
+              id="shutdownBtn"
+              class="power-menu-btn shutdown"
+            >
+
+              <span class="power-menu-icon">
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 3v8"/>
+                  <path d="M7 5.8a8 8 0 1 0 10 0"/>
+                </svg>
+
+              </span>
+
+              <span class="power-menu-btn-text">
+
+                <span class="power-menu-btn-title">
+                  Shut Down
+                </span>
+
+                <span class="power-menu-btn-desc">
+                  Turn off the device
+                </span>
+
+              </span>
+
+            </button>
+
+          </div>
+
+
+          <div class="power-menu-footer">
+            Press Power to close
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- SOS SCREEN -->
+
+      <div id="sosScreen">
+
+        <div class="sos-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 4l9 16H3L12 4z"/>
+            <path d="M12 9v5"/>
+            <circle
+              cx="12"
+              cy="17"
+              r="1"
+              fill="#fff"
+              stroke="none"
+            />
+          </svg>
+
+        </div>
+
+        <div class="sos-title">
+          SOS
+        </div>
+
+        <div class="sos-subtitle">
+          SOS screen
+        </div>
+
+        <button
+          id="sosCancelBtn"
+          class="sos-cancel"
+        >
+          Cancel
+        </button>
+
+      </div>
+
+
+      <!-- POWERED OFF
+           Hidden intentionally.
+           Shutdown now leaves the screen black.
+      -->
+
+      <div id="poweredOff">
+
+        <div class="powered-off-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            stroke-width="1.9"
+            stroke-linecap="round"
+          >
+            <path d="M12 3v8"/>
+            <path d="M7 5.8a8 8 0 1 0 10 0"/>
+          </svg>
+
+        </div>
+
+        <div class="powered-off-title">
+          Powered Off
+        </div>
+
+        <button id="powerOnBtn">
+          POWER ON
+        </button>
+
+      </div>
+
+
+      <!-- ANDROID NAV BAR -->
+
+      <div
+        style="
+          position:absolute;
+          bottom:0;
+          left:0;
+          right:0;
+          height:36px;
+          background:#0a0a0a;
+          z-index:20;
+          display:flex;
+          align-items:center;
+        "
+      >
+
+        <div
+          class="nav-key"
+          title="Recents"
+        >
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="#e5e7eb"
+          >
+            <rect x="4" y="5" width="3" height="14" rx="1.5"/>
+            <rect x="10.5" y="5" width="3" height="14" rx="1.5"/>
+            <rect x="17" y="5" width="3" height="14" rx="1.5"/>
+          </svg>
+        </div>
+
+        <div
+          class="nav-key"
+          title="Home"
+        >
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#e5e7eb"
+            stroke-width="2.2"
+          >
+            <circle cx="12" cy="12" r="7"/>
+          </svg>
+        </div>
+
+        <div
+          class="nav-key"
+          title="Back"
+        >
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="#e5e7eb"
+          >
+            <path d="M15 5 L8 12 L15 19 Z"/>
+          </svg>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+<script>
+(function(){
+
+  var $=function(id){
+    return document.getElementById(id);
+  };
+
+
+  /* =========================================================
+     ELEMENT REFERENCES
+     ========================================================= */
+
+  var screen=$('screen');
+
+  var bootOverlay=$('bootOverlay');
+  var bootMoon=$('bootMoon');
+  var bootAndroid=$('bootAndroid');
+  var bootLoading=$('bootLoading');
+
+  var actScreen=$('actScreen');
+  var welcome=$('welcome');
+  var appScreen=$('appScreen');
+
+  var actInput=$('actInput');
+  var actError=$('actError');
+  var verifyBtn=$('verifyBtn');
+  var getCodeBtn=$('getCodeBtn');
+
+  var linkCard=$('linkCard');
+  var linkText=$('linkText');
+  var copyBtn=$('copyBtn');
+  var openBtn=$('openBtn');
+  var closeLinkBtn=$('closeLinkBtn');
+
+  var terminal=$('terminal');
+  var terminalScroll=$('terminalScroll');
+  var cmdInput=$('cmdInput');
+  var sendBtn=$('sendBtn');
+
+  var statsText=$('statsText');
+  var deviceText=$('deviceText');
+
+  var terminalBtn=$('terminalBtn');
+  var settingBtn=$('settingBtn');
+
+  var settingsDlg=$('settingsDlg');
+  var themeBtn=$('themeBtn');
+  var closeSettingsBtn=$('closeSettingsBtn');
+
+  var demoNote=$('demoNote');
+
+  var clock=$('clock');
+
+
+  /* =========================================================
+     HARDWARE CONTROLS
+     ========================================================= */
+
+  var volumeUpBtn=$('volumeUpBtn');
+  var volumeDownBtn=$('volumeDownBtn');
+  var powerBtn=$('powerBtn');
+
+  var volumeIndicator=$('volumeIndicator');
+  var volumeFill=$('volumeFill');
+  var volumePercent=$('volumePercent');
+
+  var lockScreen=$('lockScreen');
+  var lockTime=$('lockTime');
+  var lockDate=$('lockDate');
+
+  var powerMenu=$('powerMenu');
+  var sosBtn=$('sosBtn');
+  var resetBtn=$('resetBtn');
+  var shutdownBtn=$('shutdownBtn');
+
+  var sosScreen=$('sosScreen');
+  var sosCancelBtn=$('sosCancelBtn');
+
+  var poweredOff=$('poweredOff');
+  var powerOnBtn=$('powerOnBtn');
+
+
+  /* =========================================================
+     CLOCK
+     ========================================================= */
+
+  function tickClock(){
+
+    var d=new Date();
+
+    var h=
+      String(d.getHours()).padStart(2,'0');
+
+    var m=
+      String(d.getMinutes()).padStart(2,'0');
+
+    clock.textContent=
+      h+':'+m;
+
+    lockTime.textContent=
+      h+':'+m;
+
+    lockDate.textContent=
+      d.toLocaleDateString(
+        undefined,
+        {
+          weekday:'long',
+          month:'long',
+          day:'numeric'
+        }
+      );
+
+  }
+
+  tickClock();
+
+  setInterval(tickClock,1000);
+
+
+  /* =========================================================
+     APP STATE
+     ========================================================= */
+
+  var activationLink='';
+
+  var darkMode=false;
+
+  var running=false;
+
+  var monitorTimer=null;
+
+  var lastNewScan=0;
+
+  var devices={};
+
+  var WORKER=
+    'https://moon501access.moon10512344.workers.dev';
+
+
+  /* =========================================================
+     VOLUME STATE
+     ========================================================= */
+
+  var volumeLevel=
+    parseInt(
+      localStorage.getItem('wifiCheckerVolume'),
+      10
+    );
+
+  if(
+    isNaN(volumeLevel)
+    ||
+    volumeLevel<0
+    ||
+    volumeLevel>100
+  ){
+
+    volumeLevel=50;
+
+  }
+
+  var volumeHideTimer=null;
+
+
+  function updateVolumeUI(){
+
+    volumeFill.style.height=
+      volumeLevel+'%';
+
+    volumePercent.textContent=
+      volumeLevel+'%';
+
+  }
+
+
+  function showVolumeIndicator(){
+
+    updateVolumeUI();
+
+    volumeIndicator.classList.add('show');
+
+    if(volumeHideTimer)
+      clearTimeout(volumeHideTimer);
+
+    volumeHideTimer=
+      setTimeout(
+        function(){
+
+          volumeIndicator.classList.remove('show');
+
+        },
+        1300
+      );
+
+  }
+
+
+  function changeVolume(amount){
+
+    volumeLevel+=amount;
+
+    volumeLevel=
+      Math.max(
+        0,
+        Math.min(
+          100,
+          volumeLevel
+        )
+      );
+
+    localStorage.setItem(
+      'wifiCheckerVolume',
+      String(volumeLevel)
+    );
+
+    showVolumeIndicator();
+
+  }
+
+
+  volumeUpBtn.addEventListener(
+    'click',
+    function(e){
+
+      e.preventDefault();
+
+      changeVolume(10);
+
+    }
+  );
+
+
+  volumeDownBtn.addEventListener(
+    'click',
+    function(e){
+
+      e.preventDefault();
+
+      changeVolume(-10);
+
+    }
+  );
+
+
+  updateVolumeUI();
+
+
+  /* =========================================================
+     POWER STATE
+     ========================================================= */
+
+  var locked=false;
+
+  var poweredOffState=false;
+
+  var powerHoldTimer=null;
+
+  var powerLongPressed=false;
+
+  var bootTimers=[];
+
+
+  function clearBootTimers(){
+
+    bootTimers.forEach(
+      function(timer){
+
+        clearTimeout(timer);
+
+      }
+    );
+
+    bootTimers=[];
+
+  }
+
+
+  function setBootTimer(fn,time){
+
+    var timer=
+      setTimeout(
+        fn,
+        time
+      );
+
+    bootTimers.push(timer);
+
+    return timer;
+
+  }
+
+
+  /* =========================================================
+     LOCK SCREEN
+     ========================================================= */
+
+  function lockDevice(){
+
+    if(poweredOffState)
+      return;
+
+    if(booting)
+      return;
+
+    if(powerMenu.style.display==='flex')
+      return;
+
+    if(sosScreen.style.display==='flex')
+      return;
+
+    locked=true;
+
+    lockScreen.style.display='flex';
+
+    requestAnimationFrame(
+      function(){
+
+        lockScreen.classList.add('show');
+
+      }
+    );
+
+  }
+
+
+  function unlockDevice(){
+
+    if(!locked)
+      return;
+
+    lockScreen.classList.remove('show');
+
+    setTimeout(
+      function(){
+
+        lockScreen.style.display='none';
+
+      },
+      250
+    );
+
+    locked=false;
+
+  }
+
+
+  function toggleLockScreen(){
+
+    if(locked){
+
+      unlockDevice();
+
+    }
+
+    else{
+
+      lockDevice();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     POWER MENU
+     ========================================================= */
+
+  function showPowerMenu(){
+
+    if(poweredOffState)
+      return;
+
+    if(booting)
+      return;
+
+    if(locked)
+      return;
+
+    powerMenu.style.display='flex';
+
+    requestAnimationFrame(
+      function(){
+
+        powerMenu.classList.add('show');
+
+      }
+    );
+
+  }
+
+
+  function hidePowerMenu(){
+
+    powerMenu.classList.remove('show');
+
+    setTimeout(
+      function(){
+
+        if(!powerMenu.classList.contains('show')){
+
+          powerMenu.style.display='none';
+
+        }
+
+      },
+      220
+    );
+
+  }
+
+
+  /* Close when tapping outside the sheet */
+
+  powerMenu.addEventListener(
+    'click',
+    function(e){
+
+      if(e.target===powerMenu){
+
+        hidePowerMenu();
+
+      }
+
+    }
+  );
+
+
+  /* =========================================================
+     POWER BUTTON
+     ========================================================= */
+
+  powerBtn.addEventListener(
+    'pointerdown',
+    function(e){
+
+      e.preventDefault();
+
+      powerLongPressed=false;
+
+      if(powerHoldTimer)
+        clearTimeout(powerHoldTimer);
+
+      try{
+
+        powerBtn.setPointerCapture(
+          e.pointerId
+        );
+
+      }
+
+      catch(err){}
+
+
+      /*
+       * If the simulated device is powered off,
+       * a long press boots the device again.
+       */
+
+      powerHoldTimer=
+        setTimeout(
+          function(){
+
+            powerLongPressed=true;
+
+            if(poweredOffState){
+
+              startBootSequence();
+
+              return;
+
+            }
+
+            showPowerMenu();
+
+          },
+          1700
+        );
+
+    }
+  );
+
+
+  powerBtn.addEventListener(
+    'pointerup',
+    function(e){
+
+      e.preventDefault();
+
+      if(powerHoldTimer){
+
+        clearTimeout(
+          powerHoldTimer
+        );
+
+        powerHoldTimer=null;
+
+      }
+
+      try{
+
+        powerBtn.releasePointerCapture(
+          e.pointerId
+        );
+
+      }
+
+      catch(err){}
+
+
+      /*
+       * A completed long press has already
+       * handled its own action.
+       */
+
+      if(powerLongPressed){
+
+        powerLongPressed=false;
+
+        return;
+
+      }
+
+
+      /*
+       * While powered off, a short press
+       * does nothing.
+       */
+
+      if(poweredOffState)
+        return;
+
+
+      if(powerMenu.style.display==='flex'){
+
+        hidePowerMenu();
+
+        return;
+
+      }
+
+
+      if(booting)
+        return;
+
+
+      toggleLockScreen();
+
+    }
+  );
+
+
+  powerBtn.addEventListener(
+    'pointercancel',
+    function(){
+
+      if(powerHoldTimer){
+
+        clearTimeout(
+          powerHoldTimer
+        );
+
+        powerHoldTimer=null;
+
+      }
+
+      powerLongPressed=false;
+
+    }
+  );
+
+
+  powerBtn.addEventListener(
+    'contextmenu',
+    function(e){
+
+      e.preventDefault();
+
+    }
+  );
+
+
+  /* =========================================================
+     SOS
+     ========================================================= */
+
+  sosBtn.addEventListener(
+    'click',
+    function(){
+
+      hidePowerMenu();
+
+      sosScreen.style.display='flex';
+
+      requestAnimationFrame(
+        function(){
+
+          sosScreen.classList.add('show');
+
+        }
+      );
+
+    }
+  );
+
+
+  sosCancelBtn.addEventListener(
+    'click',
+    function(){
+
+      sosScreen.classList.remove('show');
+
+      setTimeout(
+        function(){
+
+          sosScreen.style.display='none';
+
+        },
+        220
+      );
+
+    }
+  );
+
+
+  /* =========================================================
+     RESET / RESTART
+     ========================================================= */
+
+  resetBtn.addEventListener(
+    'click',
+    function(){
+
+      hidePowerMenu();
+
+      locked=false;
+
+      lockScreen.classList.remove('show');
+
+      lockScreen.style.display='none';
+
+      sosScreen.classList.remove('show');
+
+      sosScreen.style.display='none';
+
+      if(running)
+        stopScanner();
+
+      startBootSequence();
+
+    }
+  );
+
+
+  /* =========================================================
+     SHUT DOWN
+     ========================================================= */
+
+  shutdownBtn.addEventListener(
+    'click',
+    function(){
+
+      hidePowerMenu();
+
+      locked=false;
+
+      lockScreen.classList.remove('show');
+
+      lockScreen.style.display='none';
+
+      sosScreen.classList.remove('show');
+
+      sosScreen.style.display='none';
+
+
+      if(running)
+        stopScanner();
+
+
+      /*
+       * Stop every existing boot timer.
+       */
+
+      clearBootTimers();
+
+
+      /*
+       * The device is now powered off.
+       *
+       * IMPORTANT:
+       * booting stays FALSE so the physical
+       * power button can still receive the
+       * long-press event.
+       */
+
+      booting=false;
+
+      poweredOffState=true;
+
+
+      /*
+       * Hide application/system UI.
+       */
+
+      actScreen.style.display='none';
+
+      welcome.style.display='none';
+
+      appScreen.style.display='none';
+
+      settingsDlg.style.display='none';
+
+      poweredOff.style.display='none';
+
+      powerMenu.classList.remove('show');
+
+      powerMenu.style.display='none';
+
+
+      /*
+       * Show the Moon Studio boot logo
+       * for the shutdown animation.
+       */
+
+      bootOverlay.style.display='flex';
+
+      bootOverlay.style.background='#000';
+
+      bootMoon.style.opacity='0';
+
+      bootAndroid.style.opacity='0';
+
+      bootLoading.style.opacity='0';
+
+
+      requestAnimationFrame(
+        function(){
+
+          bootMoon.style.opacity='1';
+
+        }
+      );
+
+
+      /*
+       * Moon Studio remains visible briefly,
+       * then fades away.
+       */
+
+      setBootTimer(
+        function(){
+
+          bootMoon.style.opacity='0';
+
+        },
+        1300
+      );
+
+
+      /*
+       * After the fade the screen remains
+       * completely black.
+       *
+       * The overlay stays visible.
+       * Only a long press on the physical
+       * power button can start booting again.
+       */
+
+      setBootTimer(
+        function(){
+
+          bootMoon.style.opacity='0';
+
+          bootAndroid.style.opacity='0';
+
+          bootLoading.style.opacity='0';
+
+          bootOverlay.style.background='#000';
+
+          bootOverlay.style.display='flex';
+
+        },
+        2050
+      );
+
+    }
+  );
+
+
+  /* =========================================================
+     POWER ON
+     ========================================================= */
+
+  /*
+   * The old POWER ON button is intentionally
+   * disabled/hidden.
+   *
+   * Power-on is now performed only by holding
+   * the physical Power button.
+   */
+
+  powerOnBtn.style.display='none';
+
+
+  /* =========================================================
+     BOOT STATE
+     ========================================================= */
+
+  var booting=true;
+
+
+  function randomBootDuration(){
+
+    return 5000;
+
+  }
+
+
+  function startBootSequence(){
+
+    clearBootTimers();
+
+    var total=randomBootDuration();
+
+    var moonDuration=
+      Math.round(total*0.25);
+
+    var androidDuration=
+      Math.round(total*0.28);
+
+    var loadingDuration=
+      total-
+      moonDuration-
+      androidDuration;
+
+    var fade=700;
+
+
+    booting=true;
+
+    poweredOffState=false;
+
+    locked=false;
+
+
+    lockScreen.classList.remove('show');
+
+    lockScreen.style.display='none';
+
+
+    powerMenu.classList.remove('show');
+
+    powerMenu.style.display='none';
+
+
+    sosScreen.classList.remove('show');
+
+    sosScreen.style.display='none';
+
+
+    poweredOff.style.display='none';
+
+
+    bootOverlay.style.display='flex';
+
+    bootOverlay.style.background='#000';
+
+
+    bootMoon.style.opacity='0';
+
+    bootAndroid.style.opacity='0';
+
+    bootLoading.style.opacity='0';
+
+
+    actScreen.style.display='none';
+
+    welcome.style.display='none';
+
+    appScreen.style.display='none';
+
+    settingsDlg.style.display='none';
+
+
+    /* =====================================================
+       MOON STUDIO
+       ===================================================== */
+
+    setBootTimer(
+      function(){
+
+        if(!booting)
+          return;
+
+        bootMoon.style.opacity='1';
+
+
+        setBootTimer(
+          function(){
+
+            if(!booting)
+              return;
+
+            bootMoon.style.opacity='0';
+
+          },
+          Math.max(
+            0,
+            moonDuration-fade
+          )
+        );
+
+      },
+      50
+    );
+
+
+    /* =====================================================
+       ANDROID / KNOX
+       ===================================================== */
+
+    setBootTimer(
+      function(){
+
+        if(!booting)
+          return;
+
+        bootAndroid.style.opacity='1';
+
+
+        setBootTimer(
+          function(){
+
+            if(!booting)
+              return;
+
+            bootAndroid.style.opacity='0';
+
+          },
+          Math.max(
+            0,
+            androidDuration-fade
+          )
+        );
+
+      },
+      moonDuration
+    );
+
+
+    /* =====================================================
+       WIFI CHECKER LOADING
+       ===================================================== */
+
+    setBootTimer(
+      function(){
+
+        if(!booting)
+          return;
+
+        bootLoading.style.opacity='1';
+
+
+        setBootTimer(
+          function(){
+
+            if(!booting)
+              return;
+
+            bootLoading.style.opacity='0';
+
+          },
+          Math.max(
+            0,
+            loadingDuration-fade
+          )
+        );
+
+      },
+      moonDuration+androidDuration
+    );
+
+
+    /* =====================================================
+       BOOT FINISHED
+       ===================================================== */
+
+    setBootTimer(
+      function(){
+
+        bootMoon.style.opacity='0';
+
+        bootAndroid.style.opacity='0';
+
+        bootLoading.style.opacity='0';
+
+
+        bootOverlay.style.display='none';
+
+        booting=false;
+
+
+        /*
+         * After boot, return to activation.
+         */
+
+        actScreen.style.display='flex';
+
+      },
+      total
+    );
+
+  }
+
+
+  startBootSequence();
+
+
+  /* =========================================================
+     BLOCK INTERACTION DURING BOOT
+     ========================================================= */
+
+  document.addEventListener(
+    'keydown',
+    function(e){
+
+      if(booting){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+      }
+
+    },
+    true
+  );
+
+
+  document.addEventListener(
+    'pointerdown',
+    function(e){
+
+      if(booting){
+
+        /*
+         * The physical power button is outside
+         * the screen, so its pointer event is
+         * not blocked by this screen blocker.
+         */
+
+        if(
+          e.target===powerBtn ||
+          powerBtn.contains(e.target)
+        ){
+
+          return;
+
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+      }
+
+    },
+    true
+  );
+
+
+  document.addEventListener(
+    'click',
+    function(e){
+
+      if(booting){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+      }
+
+    },
+    true
+  );
+
+
+  /* =========================================================
+     TERMINAL
+     ========================================================= */
+
+  function appendTerminal(t){
+
+    terminal.appendChild(
+      document.createTextNode(t+'\n')
+    );
+
+    terminalScroll.scrollTop=
+      terminalScroll.scrollHeight;
+
+  }
+
+
+  /* =========================================================
+     GET CODE
+     ========================================================= */
+
+  getCodeBtn.addEventListener(
+    'click',
+    function(){
+
+      getCodeBtn.style.pointerEvents='none';
+
+      getCodeBtn.textContent='Loading...';
+
+      actError.textContent='';
+
+
+      try{
+
+        fetch(
+          WORKER+'/api/session',
+          {
+            method:'GET'
+          }
+        )
+
+        .then(
+          function(r){
+
+            return r.json()
+              .catch(
+                function(){
+                  return {};
+                }
+              )
+              .then(
+                function(j){
+
+                  return {
+                    ok:r.ok>=200 && r.ok<300,
+                    j:j
+                  };
+
+                }
+              );
+
+          }
+        )
+
+        .then(
+          function(res){
+
+            var url=
+              (
+                res.j &&
+                (
+                  res.j.url ||
+                  res.j.activationUrl
+                )
+              ) || '';
+
+
+            if(!res.ok || !url){
+
+              actError.textContent=
+                'Unable to get activation code.';
+
+            }
+
+            else{
+
+              activationLink=url;
+
+              linkText.textContent=url;
+
+              linkCard.style.display='block';
+
+            }
+
+          }
+        )
+
+        .catch(
+          function(){
+
+            actError.textContent=
+              'Connection error. Please try again.';
+
+          }
+        )
+
+        .finally(
+          function(){
+
+            getCodeBtn.style.pointerEvents='auto';
+
+            getCodeBtn.textContent=
+              'If you do not have an activation code? Get code';
+
+          }
+        );
+
+      }
+
+      catch(e){
+
+        actError.textContent=
+          'Connection error. Please try again.';
+
+        getCodeBtn.style.pointerEvents='auto';
+
+        getCodeBtn.textContent=
+          'If you do not have an activation code? Get code';
+
+      }
+
+    }
+  );
+
+
+  /* =========================================================
+     LINK BUTTONS
+     ========================================================= */
+
+  copyBtn.addEventListener(
+    'click',
+    function(){
+
+      if(!activationLink)
+        return;
+
+      try{
+
+        navigator.clipboard.writeText(
+          activationLink
+        );
+
+      }
+
+      catch(e){}
+
+      copyBtn.textContent='Copied';
+
+      setTimeout(
+        function(){
+
+          copyBtn.textContent='Copy';
+
+        },
+        1200
+      );
+
+    }
+  );
+
+
+  openBtn.addEventListener(
+    'click',
+    function(){
+
+      if(activationLink){
+
+        try{
+
+          window.open(
+            activationLink,
+            '_blank'
+          );
+
+        }
+
+        catch(e){}
+
+      }
+
+    }
+  );
+
+
+  closeLinkBtn.addEventListener(
+    'click',
+    function(){
+
+      linkCard.style.display='none';
+
+    }
+  );
+
+
+  /* =========================================================
+     VERIFY
+     ========================================================= */
+
+  verifyBtn.addEventListener(
+    'click',
+    function(){
+
+      var key=actInput.value.trim();
+
+
+      if(!key){
+
+        actError.textContent=
+          'Please enter an activation code.';
+
+        return;
+
+      }
+
+
+      if(
+        !/^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/
+          .test(key)
+      ){
+
+        actError.textContent=
+          'Invalid activation code format.';
+
+        return;
+
+      }
+
+
+      verifyBtn.disabled=true;
+
+      verifyBtn.textContent='Verifying...';
+
+      actError.textContent='';
+
+
+      setTimeout(
+        function(){
+
+          verifyBtn.disabled=false;
+
+          verifyBtn.textContent='Verify';
+
+          showWelcomeIntro();
+
+        },
+        700
+      );
+
+    }
+  );
+
+
+  actInput.addEventListener(
+    'keydown',
+    function(e){
+
+      if(e.key==='Enter'){
+
+        verifyBtn.click();
+
+      }
+
+    }
+  );
+
+
+  /* =========================================================
+     WELCOME
+     ========================================================= */
+
+  function showWelcomeIntro(){
+
+    actScreen.style.display='none';
+
+    welcome.style.display='flex';
+
+    setTimeout(
+      function(){
+
+        welcome.style.opacity='1';
+
+      },
+      50
+    );
+
+    setTimeout(
+      function(){
+
+        welcome.style.opacity='0';
+
+      },
+      2400
+    );
+
+    setTimeout(
+      function(){
+
+        welcome.style.display='none';
+
+        launchWifiChecker();
+
+      },
+      3100
+    );
+
+  }
+
+
+  /* =========================================================
+     SIMULATED SCAN DATA
+     ========================================================= */
+
+  var SIM_POOL=[
+
+    {
+      ip:'192.168.1.1',
+      name:'router',
+      base:3,
+      tcp:80
+    },
+
+    {
+      ip:'192.168.1.10',
+      name:'Unknown',
+      base:45,
+      tcp:443
+    },
+
+    {
+      ip:'192.168.1.25',
+      name:'iphone',
+      base:80,
+      tcp:null
+    },
+
+    {
+      ip:'192.168.1.42',
+      name:'Unknown',
+      base:1,
+      tcp:8080
+    },
+
+    {
+      ip:'192.168.1.66',
+      name:'laptop',
+      base:12,
+      tcp:22
+    },
+
+    {
+      ip:'192.168.1.100',
+      name:'Unknown',
+      base:150,
+      tcp:null
+    },
+
+    {
+      ip:'192.168.1.120',
+      name:'printer',
+      base:22,
+      tcp:80
+    },
+
+    {
+      ip:'192.168.1.150',
+      name:'tv',
+      base:35,
+      tcp:8000
+    },
+
+    {
+      ip:'192.168.1.200',
+      name:'camera',
+      base:60,
+      tcp:null
+    }
+
+  ];
+
+
+  var extraPool=[
+
+    {
+      ip:'192.168.1.77',
+      name:'Unknown',
+      base:28,
+      tcp:443
+    },
+
+    {
+      ip:'192.168.1.188',
+      name:'tablet',
+      base:55,
+      tcp:null
+    }
+
+  ];
+
+
+  function jitter(base){
+
+    return Math.max(
+      1,
+      Math.round(
+        base+(Math.random()*14-7)
+      )
+    );
+
+  }
+
+
+  function addSimDevice(d){
+
+    devices[d.ip]={
+      ip:d.ip,
+      name:d.name,
+      ping:jitter(d.base),
+      tcp:d.tcp
+    };
+
+  }
+
+
+  function getStatus(ping){
+
+    if(ping==null)
+      return '🔴 OFFLINE';
+
+    if(ping<50)
+      return '🟢 ONLINE';
+
+    if(ping<150)
+      return '🟡 UNSTABLE';
+
+    return '🟡 LAG';
+
+  }
+
+
+  function compareIp(a,b){
+
+    var aa=
+      a.split('.')
+       .map(
+         function(x){
+           return parseInt(x)||0;
+         }
+       );
+
+    var bb=
+      b.split('.')
+       .map(
+         function(x){
+           return parseInt(x)||0;
+         }
+       );
+
+
+    for(
+      var i=0;
+      i<Math.min(aa.length,bb.length);
+      i++
+    ){
+
+      if(aa[i]!==bb[i])
+        return aa[i]-bb[i];
+
+    }
+
+
+    return aa.length-bb.length;
+
+  }
+
+
+  function pad(s,n){
+
+    s=String(s);
+
+    while(s.length<n)
+      s+=' ';
+
+    return s;
+
+  }
+
+
+  function updateStats(){
+
+    var list=
+      Object.keys(devices)
+      .map(
+        function(k){
+          return devices[k];
+        }
+      );
+
+
+    var online=0;
+    var unstable=0;
+    var offline=0;
+    var pings=[];
+
+
+    list.forEach(
+      function(d){
+
+        if(d.ping==null){
+
+          offline++;
+
+        }
+
+        else{
+
+          pings.push(d.ping);
+
+          if(d.ping<50)
+            online++;
+          else
+            unstable++;
+
+        }
+
+      }
+    );
+
+
+    var avg=
+      pings.length
+      ?
+      pings.reduce(
+        function(a,b){
+          return a+b;
+        },
+        0
+      )/pings.length
+      :
+      0;
+
+
+    var min=
+      pings.length
+      ?
+      Math.min.apply(null,pings)
+      :
+      null;
+
+
+    var max=
+      pings.length
+      ?
+      Math.max.apply(null,pings)
+      :
+      null;
+
+
+    var variation=
+      (min!=null&&max!=null)
+      ?
+      max-min
+      :
+      0;
+
+
+    var assessment;
+
+
+    if(!pings.length)
+
+      assessment=
+        '❌ Không có thiết bị phản hồi';
+
+    else if(avg<50)
+
+      assessment=
+        '🟢 LAN RẤT ỔN ĐỊNH';
+
+    else if(avg<100)
+
+      assessment=
+        '🟢 LAN ỔN ĐỊNH';
+
+    else if(avg<200)
+
+      assessment=
+        '🟡 LAN HƠI CHẬM';
+
+    else
+
+      assessment=
+        '🔴 LAN ĐANG LAG';
+
+
+    var avgStr=
+      avg<=0
+      ?
+      'N/A'
+      :
+      Math.round(avg)+' ms';
+
+
+    statsText.textContent=
+
+      'Thiết bị: '+list.length+
+      '    Online: '+online+
+      '    Chập chờn/Lag: '+unstable+
+      '    Offline: '+offline+
+      '\n'+
+
+      'Ping TB: '+avgStr+
+      '    Thấp nhất: '+
+      (min==null?'N/A':min+' ms')+
+      '    Cao nhất: '+
+      (max==null?'N/A':max+' ms')+
+      '    Dao động: '+variation+' ms\n'+
+
+      'Đánh giá: '+assessment;
+
+  }
+
+
+  function updateDeviceList(){
+
+    var sorted=
+      Object.keys(devices)
+      .map(
+        function(k){
+          return devices[k];
+        }
+      )
+      .sort(
+        function(a,b){
+          return compareIp(a.ip,b.ip);
+        }
+      );
+
+
+    var b=
+      'IP               NAME                 PING       TCP   STATUS\n';
+
+    b+=
+      '──────────────────────────────────────────────────────────────\n';
+
+
+    sorted.forEach(
+      function(d){
+
+        var name=
+          d.name.substring(0,19);
+
+        var ping=
+          d.ping!=null
+          ?
+          d.ping+' ms'
+          :
+          'N/A';
+
+        var tcp=
+          d.tcp!=null
+          ?
+          String(d.tcp)
+          :
+          'N/A';
+
+
+        b+=
+          pad(d.ip,16)+' '+
+          pad(name,20)+' '+
+          pad(ping,10)+' '+
+          pad(tcp,5)+' '+
+          getStatus(d.ping)+
+          '\n';
+
+      }
+    );
+
+
+    deviceText.textContent=b;
+
+  }
+
+
+  function updateAllUI(){
+
+    updateStats();
+
+    updateDeviceList();
+
+  }
+
+
+  /* =========================================================
+     SCANNER
+     ========================================================= */
+
+  function startScanner(){
+
+    if(running){
+
+      appendTerminal(
+        '[INFO] Scanner already running.'
+      );
+
+      return;
+
+    }
+
+
+    running=true;
+
+
+    setTimeout(
+      function(){
+
+        appendTerminal(
+          '[INFO] Local IP: 192.168.1.42'
+        );
+
+        appendTerminal(
+          '[INFO] LAN: 192.168.1.0/24'
+        );
+
+        appendTerminal(
+          '[INFO] Ping: ICMP'
+        );
+
+        appendTerminal(
+          '[INFO] TCP ports: 80, 443, 8080, 8000, 22'
+        );
+
+        appendTerminal(
+          '[SCAN] Initial scan started...'
+        );
+
+      },
+      500
+    );
+
+
+    setTimeout(
+      function(){
+
+        if(!running)
+          return;
+
+
+        devices={};
+
+
+        SIM_POOL.forEach(
+          addSimDevice
+        );
+
+
+        appendTerminal(
+          '[SCAN] Found '+
+          Object.keys(devices).length+
+          ' device(s).'
+        );
+
+
+        updateAllUI();
+
+
+        lastNewScan=Date.now();
+
+
+        startMonitor();
+
+      },
+      3200
+    );
+
+  }
+
+
+  function startMonitor(){
+
+    if(monitorTimer)
+      clearInterval(monitorTimer);
+
+
+    monitorTimer=
+      setInterval(
+        function(){
+
+          if(!running)
+            return;
+
+
+          Object.keys(devices)
+            .forEach(
+              function(ip){
+
+                var d=devices[ip];
+
+
+                if(
+                  d.name==='camera' &&
+                  Math.random()<0.18
+                ){
+
+                  d.ping=null;
+
+                }
+
+                else{
+
+                  var base=
+                    SIM_POOL
+                    .concat(extraPool)
+                    .filter(
+                      function(x){
+                        return x.ip===ip;
+                      }
+                    )[0];
+
+
+                  var b=
+                    base
+                    ?
+                    base.base
+                    :
+                    30;
+
+
+                  d.ping=jitter(b);
+
+                }
+
+              }
+            );
+
+
+          updateAllUI();
+
+
+          var now=Date.now();
+
+
+          if(
+            now-lastNewScan>=10000
+          ){
+
+            appendTerminal(
+              '[SCAN] Searching for new devices...'
+            );
+
+
+            var added=0;
+
+
+            extraPool.forEach(
+              function(x){
+
+                if(
+                  !devices[x.ip] &&
+                  Math.random()<0.5
+                ){
+
+                  addSimDevice(x);
+
+                  added++;
+
+                }
+
+              }
+            );
+
+
+            appendTerminal(
+              '[SCAN] New devices: '+added
+            );
+
+
+            lastNewScan=now;
+
+            updateAllUI();
+
+          }
+
+        },
+        1000
+      );
+
+  }
+
+
+  function stopScanner(){
+
+    running=false;
+
+
+    if(monitorTimer){
+
+      clearInterval(monitorTimer);
+
+      monitorTimer=null;
+
+    }
+
+
+    appendTerminal(
+      '[INFO] Scanner stopped.'
+    );
+
+  }
+
+
+  function manualScan(){
+
+    setTimeout(
+      function(){
+
+        SIM_POOL
+          .concat(extraPool)
+          .forEach(
+            function(x){
+
+              if(
+                !devices[x.ip] &&
+                Math.random()<0.4
+              ){
+
+                addSimDevice(x);
+
+              }
+
+            }
+          );
+
+
+        appendTerminal(
+          '[SCAN] Scan finished: '+
+          Object.keys(devices).length+
+          ' device(s).'
+        );
+
+
+        updateAllUI();
+
+      },
+      1500
+    );
+
+  }
+
+
+  /* =========================================================
+     COMMAND HANDLER
+     ========================================================= */
+
+  function handleCommand(cmd){
+
+    var c=cmd.toLowerCase();
+
+
+    if(c==='scan'){
+
+      appendTerminal(
+        '[CMD] Manual scan started...'
+      );
+
+      manualScan();
+
+    }
+
+
+    else if(c==='devices'){
+
+      if(
+        !Object.keys(devices).length
+      ){
+
+        appendTerminal(
+          '[INFO] No devices.'
+        );
+
+      }
+
+      else{
+
+        Object.keys(devices)
+          .forEach(
+            function(ip){
+
+              var d=devices[ip];
+
+
+              appendTerminal(
+                d.ip+
+                ' | '+
+                d.name+
+                ' | '+
+                (
+                  d.ping!=null
+                  ?
+                  d.ping
+                  :
+                  'N/A'
+                )+
+                ' ms | '+
+                (
+                  d.tcp!=null
+                  ?
+                  d.tcp
+                  :
+                  'N/A'
+                )+
+                ' | '+
+                getStatus(d.ping)
+              );
+
+            }
+          );
+
+      }
+
+    }
+
+
+    else if(c==='clear'){
+
+      terminal.textContent='';
+
+      appendTerminal(
+        '[INFO] Terminal cleared.'
+      );
+
+    }
+
+
+    else if(c==='stop'){
+
+      stopScanner();
+
+    }
+
+
+    else if(c==='start'){
+
+      startScanner();
+
+    }
+
+
+    else if(c==='help'){
+
+      appendTerminal(
+        '[HELP] scan - scan LAN'
+      );
+
+      appendTerminal(
+        '[HELP] devices - show devices'
+      );
+
+      appendTerminal(
+        '[HELP] clear - clear terminal'
+      );
+
+      appendTerminal(
+        '[HELP] stop - stop monitor'
+      );
+
+      appendTerminal(
+        '[HELP] start - start monitor'
+      );
+
+      appendTerminal(
+        '[HELP] settings - open settings'
+      );
+
+    }
+
+
+    else if(c==='settings'){
+
+      showSettings();
+
+    }
+
+
+    else{
+
+      appendTerminal(
+        '[ERROR] Unknown command: '+cmd
+      );
+
+    }
+
+  }
+
+
+  function sendCommand(){
+
+    var cmd=cmdInput.value.trim();
+
+
+    if(!cmd)
+      return;
+
+
+    appendTerminal(
+      '[CMD] '+cmd
+    );
+
+
+    cmdInput.value='';
+
+
+    handleCommand(cmd);
+
+  }
+
+
+  sendBtn.addEventListener(
+    'click',
+    sendCommand
+  );
+
+
+  cmdInput.addEventListener(
+    'keydown',
+    function(e){
+
+      if(e.key==='Enter')
+        sendCommand();
+
+    }
+  );
+
+
+  terminalBtn.addEventListener(
+    'click',
+    function(){
+
+      appendTerminal(
+        '[INFO] Terminal selected.'
+      );
+
+    }
+  );
+
+
+  settingBtn.addEventListener(
+    'click',
+    showSettings
+  );
+
+
+  /* =========================================================
+     SETTINGS
+     ========================================================= */
+
+  function showSettings(){
+
+    settingsDlg.style.display='block';
+
+  }
+
+
+  closeSettingsBtn.addEventListener(
+    'click',
+    function(){
+
+      settingsDlg.style.display='none';
+
+    }
+  );
+
+
+  themeBtn.addEventListener(
+    'click',
+    function(){
+
+      darkMode=!darkMode;
+
+      applyTheme();
+
+      themeBtn.textContent=
+        darkMode
+        ?
+        'Dark mode'
+        :
+        'Light mode';
+
+
+      appendTerminal(
+        '[INFO] Theme changed: '+
+        (darkMode?'Dark':'Light')
+      );
+
+    }
+  );
+
+
+  function applyTheme(){
+
+    var bg=
+      darkMode
+      ?
+      '#191919'
+      :
+      '#f5f4ef';
+
+
+    var termBg=
+      darkMode
+      ?
+      '#0c0c0c'
+      :
+      '#f7f7f4';
+
+
+    var text=
+      darkMode
+      ?
+      '#ebebeb'
+      :
+      '#1e1e1e';
+
+
+    var gray=
+      darkMode
+      ?
+      '#aaaaaa'
+      :
+      '#6e6e69';
+
+
+    appScreen.style.background=bg;
+
+    terminal.style.background=termBg;
+
+    terminal.style.color=text;
+
+    $('terminalTitle').style.color=text;
+
+    $('titleText').style.color=text;
+
+    $('betaText').style.color=gray;
+
+    $('statsTitle').style.color=text;
+
+    statsText.style.color=gray;
+
+    deviceText.style.color=text;
+
+    terminalBtn.style.color=text;
+
+    settingBtn.style.color=text;
+
+    cmdInput.style.color=text;
+
+    cmdInput.style.borderColor=
+      darkMode
+      ?
+      'rgba(255,255,255,.25)'
+      :
+      'rgba(128,128,128,.35)';
+
+    sendBtn.style.color=text;
+
+    demoNote.style.color=gray;
+
+  }
+
+
+  /* =========================================================
+     LAUNCH WIFI CHECKER
+     ========================================================= */
+
+  function launchWifiChecker(){
+
+    appScreen.style.display='flex';
+
+
+    appendTerminal(
+      '[DEBUG] Checking for updates...'
+    );
+
+    appendTerminal(
+      '[INFO] Wifi Checker started.'
+    );
+
+    appendTerminal(
+      '[INFO] Developed by Moon Studio.'
+    );
+
+    appendTerminal(
+      '[INFO] WiFi Checker Support: https://wificheckersupport.wasmer.app/'
+    );
+
+    appendTerminal(
+      '[INFO] Preparing LAN scanner...'
+    );
+
+
+    setTimeout(
+      function(){
+
+        appendTerminal(
+          '[UPDATE] No new version found.'
+        );
+
+      },
+      600
+    );
+
+
+    startScanner();
+
+  }
+
+  /* =========================================================
+     VIDEO AUTO-PLAY MODE
+     Chạy trong IIFE — truy cập được toàn bộ hàm private.
+     Tự động: boot -> activation -> fill code -> verify -> welcome -> app
+     ========================================================= */
+  (function videoAutoPlay(){
+    function log(m){ try{ console.log('[VIDEO]',m); }catch(e){} }
+
+    function doWelcomeThenLaunch(){
+      try{ actScreen.style.display = 'none'; }catch(e){}
+      if(welcome){
+        welcome.style.display = 'flex';
+        try{ welcome.style.opacity = '0'; }catch(e){}
+        setTimeout(function(){
+          try{ welcome.style.opacity = '1'; }catch(e){}
+        }, 60);
+        // Welcome hiển thị 2 giây rồi mờ đi
+        setTimeout(function(){
+          try{ welcome.style.opacity = '0'; }catch(e){}
+          setTimeout(function(){
+            try{ welcome.style.display = 'none'; }catch(e){}
+            launchWifiChecker();
+            log('App launched via welcome.');
+          }, 750);
+        }, 2000);
+      } else {
+        launchWifiChecker();
+      }
+    }
+
+    function fillAndVerify(){
+      if(!actInput || !verifyBtn){ setTimeout(fillAndVerify, 300); return; }
+      log('Filling activation code...');
+      actInput.value = 'WIFICHECKER-2026-MOON-DEMO';
+      try{ actInput.dispatchEvent(new Event('input', {bubbles:true})); }catch(e){}
+      setTimeout(function(){
+        log('Verify pressed -> Verifying...');
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = 'Verifying...';
+        setTimeout(function(){
+          log('Verify success -> welcome -> app.');
+          doWelcomeThenLaunch();
+        }, 1800);
+      }, 800);
+    }
+
+    var checkCount = 0;
+    var checker = setInterval(function(){
+      checkCount++;
+      try{
+        if(actScreen && actScreen.style.display !== 'none' && actScreen.offsetParent !== null){
+          clearInterval(checker);
+          log('Activation screen visible after '+(checkCount*0.2).toFixed(1)+'s.');
+          setTimeout(fillAndVerify, 1200);
+          return;
+        }
+      }catch(e){}
+      if(checkCount > 80){
+        clearInterval(checker);
+        log('Boot timeout, forcing app launch.');
+        try{ actScreen.style.display = 'none'; }catch(e){}
+        try{ welcome.style.display = 'none'; }catch(e){}
+        try{ launchWifiChecker(); }catch(e2){ log('launch err: '+e2.message); }
+      }
+    }, 200);
+
+    log('Video auto-play armed (inside IIFE).');
+  })();
+
+})();
+</script>
+
+
+<div id="videoCursor"></div>
+<div id="guideText"></div>
+<div id="startOverlay">
+  <div class="play-btn">
+    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  </div>
+  <h1>Wifi Checker — Video Hướng Dẫn</h1>
+  <p>Nhấn để bắt đầu (bật âm thanh)<br/>Video tự động chạy ~35 giây, có con trỏ chuột và chú thích từng bước</p>
+</div>
+
+
+<script>
+/* =========================================================
+   VIDEO GUIDE: cursor + âm thanh + chữ hướng dẫn + zoom
+   ========================================================= */
+(function(){
+  var cursor = document.getElementById('videoCursor');
+  var guideEl = document.getElementById('guideText');
+  var startOverlay = document.getElementById('startOverlay');
+  var phone = document.querySelector('.phone');
+
+  /* ---------- ÂM THANH (Web Audio API) ---------- */
+  var audioCtx = null;
+  function initAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+    }
+    if(audioCtx && audioCtx.state === 'suspended'){ audioCtx.resume(); }
+  }
+  function tone(freq, dur, type, vol, delay){
+    if(!audioCtx) return;
+    delay = delay||0;
+    var t = audioCtx.currentTime + delay;
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = freq;
+    o.type = type||'sine';
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol||0.12, t+0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.start(t); o.stop(t+dur+0.02);
+  }
+  function playClick(){ tone(760, 0.09, 'sine', 0.18); tone(380, 0.06, 'triangle', 0.1); }
+  function playType(){ tone(1100+Math.random()*400, 0.035, 'square', 0.045); }
+  function playBeep(){ tone(980, 0.14, 'sine', 0.07); }
+  function playScanTick(){ tone(1400+Math.random()*600, 0.04, 'sine', 0.035); }
+  function playSuccess(){
+    var notes = [523.25, 659.25, 783.99, 1046.5];
+    for(var i=0;i<notes.length;i++){ tone(notes[i], 0.28, 'sine', 0.13, i*0.11); }
+  }
+  function playZoom(){ tone(300, 0.35, 'sine', 0.08); tone(600, 0.35, 'sine', 0.05, 0.05); }
+
+  /* ---------- CON TRỎ CHUỘT ---------- */
+  function moveCursorTo(el, offsetX, offsetY){
+    if(!el) return;
+    var r = el.getBoundingClientRect();
+    var x = r.left + r.width/2 + (offsetX||0);
+    var y = r.top + r.height/2 + (offsetY||0);
+    cursor.style.left = x + 'px';
+    cursor.style.top = y + 'px';
+    cursor.classList.add('show');
+  }
+  function clickAt(x, y){
+    cursor.style.left = x+'px';
+    cursor.style.top = y+'px';
+    cursor.classList.add('show','clicking');
+    playClick();
+    var ripple = document.createElement('div');
+    ripple.className = 'click-ripple';
+    ripple.style.left = x+'px';
+    ripple.style.top = y+'px';
+    document.body.appendChild(ripple);
+    setTimeout(function(){ ripple.remove(); }, 700);
+    setTimeout(function(){ cursor.classList.remove('clicking'); }, 150);
+  }
+  function clickEl(el, ox, oy){
+    if(!el) return;
+    var r = el.getBoundingClientRect();
+    var x = r.left + r.width/2 + (ox||0);
+    var y = r.top + r.height/2 + (oy||0);
+    clickAt(x, y);
+  }
+
+  /* ---------- CHỮ HƯỚNG DẪN ---------- */
+  function showGuide(stepNum, text, duration){
+    guideEl.innerHTML = (stepNum ? '<span class="step-badge">Bước '+stepNum+'</span>' : '') + text;
+    guideEl.classList.add('show');
+    if(duration){
+      setTimeout(function(){ guideEl.classList.remove('show'); }, duration);
+    }
+  }
+  function hideGuide(){ guideEl.classList.remove('show'); }
+
+  /* ---------- ZOOM vào danh sách thiết bị ---------- */
+  function zoomToDevices(scale){
+    var devText = document.getElementById('deviceText') || document.getElementById('statsText');
+    if(!devText || !phone){ return; }
+    var r = devText.getBoundingClientRect();
+    var pr = phone.getBoundingClientRect();
+    var originX = ((r.left + r.width/2 - pr.left) / pr.width) * 100;
+    var originY = ((r.top + r.height/2 - pr.top) / pr.height) * 100;
+    phone.style.transformOrigin = originX + '% ' + originY + '%';
+    phone.style.transform = 'scale(' + (scale||1.45) + ')';
+    playZoom();
+  }
+  function zoomOut(){
+    if(phone){ phone.style.transform = 'scale(1)'; playZoom(); }
+  }
+
+  /* ---------- MÀN HÌNH BẮT ĐẦU ---------- */
+  var isPlayMode = window.location.search.indexOf('play=1') >= 0;
+
+  if(isPlayMode){
+    // Chế độ play: ẩn overlay, bật âm thanh, chạy timeline đồng bộ với boot
+    startOverlay.style.display = 'none';
+    initAudio();
+    // Resume audio sau một khoảng ngắn (user activation từ lần click trước)
+    setTimeout(function(){ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }, 300);
+    runGuideTimeline();
+  } else {
+    // Chế độ chờ: hiển thị overlay, khi click thì reload sang chế độ play
+    startOverlay.addEventListener('click', function(){
+      try{ sessionStorage.setItem('wcAudio','1'); }catch(e){}
+      window.location.search = 'play=1';
+    });
+    document.addEventListener('keydown', function(e){
+      try{ sessionStorage.setItem('wcAudio','1'); }catch(e){}
+      window.location.search = 'play=1';
+    });
+  }
+
+  /* ---------- TIMELINE HƯỚNG DẪN ---------- */
+  function runGuideTimeline(){
+    showGuide(null, 'Đang khởi động ứng dụng Wifi Checker...', 4500);
+
+    // Đợi màn hình kích hoạt hiện ra
+    var actCheck = setInterval(function(){
+      var act = document.getElementById('actScreen');
+      if(act && act.style.display !== 'none' && act.offsetParent !== null){
+        clearInterval(actCheck);
+        setTimeout(stepActivation, 1200);
+      }
+    }, 200);
+  }
+
+  function stepActivation(){
+    var actInput = document.getElementById('actInput');
+    var verifyBtn = document.getElementById('verifyBtn');
+    showGuide(1, 'Nhập mã kích hoạt vào ô trống', 0);
+    // Cursor di chuyển đến ô input
+    moveCursorTo(actInput);
+    setTimeout(function(){
+      clickEl(actInput);
+      // Mô phỏng gõ phím
+      var typeCount = 0;
+      var typeInterval = setInterval(function(){
+        playType();
+        typeCount++;
+        if(typeCount >= 12){ clearInterval(typeInterval); }
+      }, 90);
+      setTimeout(function(){
+        showGuide(2, 'Nhấn nút Verify để kích hoạt ứng dụng', 0);
+        moveCursorTo(verifyBtn);
+        setTimeout(function(){
+          clickEl(verifyBtn);
+          hideGuide();
+          // Đợi app chính hiện ra
+          var appCheck = setInterval(function(){
+            var app = document.getElementById('appScreen');
+            if(app && app.style.display !== 'none' && app.offsetParent !== null){
+              clearInterval(appCheck);
+              setTimeout(stepApp, 1500);
+            }
+          }, 200);
+        }, 700);
+      }, 1400);
+    }, 700);
+  }
+
+  function stepApp(){
+    playSuccess();
+    showGuide(3, 'Kích hoạt thành công! Ứng dụng đang quét mạng LAN...', 0);
+    // Tiếng quét liên tục
+    var scanCount = 0;
+    var scanInterval = setInterval(function(){
+      playScanTick();
+      scanCount++;
+      if(scanCount > 25){ clearInterval(scanInterval); }
+    }, 220);
+
+    // Sau 5 giây, danh sách thiết bị đã có -> zoom vào
+    setTimeout(function(){
+      playBeep();
+      showGuide(4, 'Kết quả quét: 9 thiết bị được tìm thấy trong mạng', 0);
+      zoomToDevices(1.5);
+      setTimeout(function(){
+        showGuide(5, 'Xem chi tiết: Ping, cổng TCP, trạng thái từng thiết bị', 0);
+      }, 3500);
+      // Sau 8 giây zoom, zoom ra
+      setTimeout(function(){
+        zoomOut();
+        setTimeout(function(){
+          showGuide(6, 'Ping trung bình thấp — mạng LAN rất ổn định', 4500);
+          playSuccess();
+          setTimeout(function(){
+            showGuide(null, 'Hoàn tất kiểm tra WiFi. Bạn có thể sử dụng ứng dụng.', 5000);
+          }, 5000);
+        }, 1000);
+      }, 8000);
+    }, 5000);
+  }
+})();
+</script>
+
+</body>
+</html>
